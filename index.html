@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/styles.css" />
+    <title>Brand Your QrCodes</title>
+  </head>
+  <body class="bg-stone-300 py-3">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+
+    <header class="h-[5vh] flex justify-center items-center">
+      <h1
+        class="font-semibold text-base text-center p-3 bg-black text-white w-[50%] border-b-2 border-b-[#00ff00]"
+      >
+        Generate Unique QR-codes For Your Brand Now
+      </h1>
+    </header>
+
+    <main
+      class="grid grid-cols-2 bg-black mx-auto w-[60%] mt-2 py-4 border-2 border-black rounded-sm"
+    >
+      <form
+        action="/qrcode"
+        class="flex flex-col items-center"
+        id="inputForm"
+        method="post"
+        enctype="multipart/form-data"
+      >
+        <h2
+          class="text-white font-semibold text-base m-3 w-fit p-3 rounded-sm border-2 border-dashed border-[#00ff00]"
+        >
+          <ol class="list-decimal list-inside flex flex-col gap-2">
+            <li class="mx-3 text-[#00ff00]">
+              Upload The Logo Of The Brand (image or svg)
+            </li>
+            <li class="mx-3 text-[#00ff00]">
+              Input The Name Of The Brand (20 characters max)
+            </li>
+            <li class="mx-3 text-[#00ff00]">Input The Url Of The Brand</li>
+          </ol>
+        </h2>
+        <div class="flex items-center justify-center w-full">
+          <label
+            for="brandLogo"
+            class="flex flex-col items-center justify-center w-[80%] h-64 rounded-sm cursor-pointer bg-black hover:bg-stone-900 border-2 border-[#00ff00]"
+          >
+            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+              <svg
+                class="w-8 h-8 mb-4 text-gray-400"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 20 16"
+              >
+                <path
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+                />
+              </svg>
+              <p class="mb-2 text-sm text-gray-400">
+                <span class="font-semibold">Click to upload</span> or drag and
+                drop
+              </p>
+              <p class="text-xs text-gray-400">
+                SVG, PNG or JPG (MAX. 800x400px)
+              </p>
+            </div>
+            <input
+              id="brandLogo"
+              name="brandLogo"
+              type="file"
+              class="hidden"
+              accept="image/jpeg,image/png,image/svg+xml"
+              required
+            />
+            <img
+              src=""
+              alt="logoPreview"
+              class="h-[100px] aspect-auto"
+              id="imgPreview"
+            />
+          </label>
+        </div>
+
+        <div class="my-3">
+          <label
+            for="brandUrl"
+            class="block text-[10px] font-semibold text-[#00ff00]"
+            >Enter The Brand's Url</label
+          >
+          <input
+            required
+            type="text"
+            name="brandUrl"
+            id="brandUrl"
+            placeholder="https://web.whatsapp.com"
+            class="block w-full p-4 text-[#00ff00] border-2 border-[#00ff00] rounded-sm font-semibold bg-[#181818] text-base"
+          />
+        </div>
+        <button
+          type="submit"
+          class="text-sm text-[#00ff00] underline text-end w-full"
+        >
+          generate qr-code
+        </button>
+      </form>
+      <div id="qrCode" class="flex flex-col gap-2 justify-center items-center">
+        <div
+          class="w-[80%] h-[80%] border-[3px] border-[#ffff00] rounded-sm flex justify-center items-center text-sm text-semibold text-yellow-500"
+          id="qrCodePreview"
+        >
+          <span>Your Branded Qr code appears here</span>
+        </div>
+      </div>
+    </main>
+    <script>
+      const inputForm = document.getElementById("inputForm");
+      const brandLogo = document.getElementById("brandLogo");
+      const imgPreview = document.getElementById("imgPreview");
+      const qrCodePreview = document.getElementById("qrCodePreview");
+
+      function toHex(array) {
+        let result = "#";
+        for (let color of array) {
+          result += color.toString(16);
+        }
+        return result;
+      }
+
+      window.onload = (ev) => {
+        if (brandLogo.files.length > 0) {
+          const reader = new FileReader();
+
+          reader.onload = (r) => {
+            imgPreview.src = r.target.result;
+          };
+          reader.readAsDataURL(brandLogo.files[0]);
+        }
+      };
+
+      brandLogo.addEventListener("change", (ev) => {
+        const reader = new FileReader();
+
+        reader.onload = (r) => {
+          imgPreview.src = r.target.result;
+        };
+        reader.readAsDataURL(ev.target.files[0]);
+      });
+
+      inputForm.addEventListener("submit", (ev) => {
+        ev.preventDefault();
+        const colorThief = new ColorThief();
+
+        let formData = new FormData(inputForm);
+        let hexColor = "";
+        if (imgPreview.complete) {
+          hexColor = toHex(colorThief.getColor(imgPreview));
+        } else {
+          imgPreview.onload = () => {
+            hexColor = toHex(colorThief.getColor(imgPreview));
+          };
+        }
+        formData.append("dominantColor", hexColor);
+
+        fetch("/qrcode", {
+          method: "POST",
+          body: formData,
+        })
+          .then((res) => {
+            return res.text();
+          })
+          .then((data) => {
+            const img = document.createElement("img");
+            img.src = "data:image/jpeg;base64," + data;
+            img.classList.add("h-[300px]");
+            qrCodePreview.innerHTML = "";
+            qrCodePreview.appendChild(img);
+          });
+      });
+    </script>
+  </body>
+</html>
