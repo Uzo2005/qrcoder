@@ -34,9 +34,6 @@
             <li class="mx-3 text-[#00ff00]">
               Upload The Logo Of The Brand (image or svg)
             </li>
-            <li class="mx-3 text-[#00ff00]">
-              Input The Name Of The Brand (20 characters max)
-            </li>
             <li class="mx-3 text-[#00ff00]">Input The Url Of The Brand</li>
           </ol>
         </h2>
@@ -126,7 +123,9 @@
       function toHex(array) {
         let result = "#";
         for (let color of array) {
-          result += color.toString(16);
+	  let hexValue = color.toString(16);
+	  if (hexValue.length < 2) { hexValue = hexValue.padStart(2, '0')}
+          result += hexValue;
         }
         return result;
       }

@@ -118,14 +118,6 @@ proc requestCallBack(req: Request) {.async, gcsafe.} =
             cssHeaders = {"Content-type": "text/css"}
 
         await req.respond(Http200, styleCss, cssHeaders.newHttpHeaders())
-    of "/whatsapp.svg":
-        let logoSvg = readfile("whatsapp.svg")
-
-        await req.respond(Http200, logoSvg, svgHeaders.newHttpHeaders())
-    of "/whatsapp-qrcode.png":
-        let copySvg = readfile("copy.svg")
-
-        await req.respond(Http200, copySvg, svgHeaders.newHttpHeaders())
     of "/qrcode":
         if req.reqMethod == HttpPost:
             let
