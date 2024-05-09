@@ -119,49 +119,60 @@ proc requestCallBack(req: Request) {.async, gcsafe.} =
 
         await req.respond(Http200, styleCss, cssHeaders.newHttpHeaders())
     of "/qrcode":
-        if req.reqMethod == HttpPost:
-            let
-                formData = req.formData()
-                brandLogoData = formData["brandLogo"][0]
-                brandLogoDataType = brandLogoData.fields["Content-Type"]
-                brandDominantColor = formData["dominantColor"][0].body
-                brandUrl = formData["brandUrl"][0].body
-                qrCode = newQR(brandUrl, ecLevel = qrECH)
-            case brandLogoDataType
-            of "image/png", "image/jpeg":
+        try:
+            if req.reqMethod == HttpPost:
                 let
-                    imgEmbed = decodeImage(brandLogoData.body)
-                    png = qrCode
-                        .renderImg(
-                            dark = brandDominantColor,
-                            alRad = 20,
-                            moRad = 10,
-                            img = imgEmbed,
-                        )
-                        .encodeImage(PngFormat)
+                    formData = req.formData()
+                    brandLogoData = formData["brandLogo"][0]
+                    brandLogoDataType = brandLogoData.fields["Content-Type"]
+                    brandDominantColor = formData["dominantColor"][0].body
+                    brandUrl = formData["brandUrl"][0].body
+                    qrCode = newQR(brandUrl, ecLevel = qrECH)
+                case brandLogoDataType
+                of "image/png", "image/jpeg":
+                    let
+                        imgEmbed = decodeImage(brandLogoData.body)
+                        png = qrCode
+                            .renderImg(
+                                dark = brandDominantColor,
+                                alRad = 20,
+                                moRad = 10,
+                                img = imgEmbed,
+                            )
+                            .encodeImage(PngFormat)
 
-                await req.respond(Http200, png.encodeMime, txtHeaders.newHttpHeaders())
-            of "image/svg+xml":
-                let tempFile = createTempFile("myTemp_", ".png", dir = "temp")
-                discard execProcess(
-                    "echo " &
-                        qrCode.printSvg(
-                            dark = brandDominantColor,
-                            alRad = 20,
-                            moRad = 10,
-                            svgImg = brandLogoData.body,
-                        ).quoteShell & " | " & "rsvg-convert --width=300 -o " & tempFile.path
+                    await req.respond(
+                        Http200, png.encodeMime, txtHeaders.newHttpHeaders()
+                    )
+                of "image/svg+xml":
+                    let tempFile = createTempFile("myTemp_", ".png", dir = "temp")
+                    discard execProcess(
+                        "echo " &
+                            qrCode.printSvg(
+                                dark = brandDominantColor,
+                                alRad = 20,
+                                moRad = 10,
+                                svgImg = brandLogoData.body,
+                            ).quoteShell & " | " & "rsvg-convert --width=300 -o " &
+                            tempFile.path
+                    )
+
+                    let png = readFile(tempFile.path)
+
+                    await req.respond(
+                        Http200, png.encodeMime, txtHeaders.newHttpHeaders()
+                    )
+                    close(tempFile.cfile)
+            else:
+                await req.respond(
+                    Http405,
+                    "Error 405: This Route Accepts Only POST requests with formdata",
                 )
-
-                let png = readFile(tempFile.path)
-
-                await req.respond(Http200, png.encodeMime, txtHeaders.newHttpHeaders())
-                close(tempFile.cfile)
-                
-        else:
+        except:
             await req.respond(
-                Http405,
-                "Error 405: This Route Accepts Only POST requests with formdata",
+                Http500,
+                "An Error Occured, Please Use Another File or Change The File Format",
+                txtHeaders.newHttpHeaders(),
             )
     else:
         await req.respond(Http404, "Error 404: This Route Does Not Exist")
